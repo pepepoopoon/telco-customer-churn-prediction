@@ -6,11 +6,87 @@ import argparse
 import json
 from pathlib import Path
 
-from .data import FEATURES, TARGET, split_data, validate_frame
+import numpy as np
+import pandas as pd
+from sklearn.metrics import average_precision_score, recall_score
+
+from .data import CATEGORICAL_FEATURES, FEATURES, TARGET, split_data, validate_frame
 from .generate_smoke_data import generate_smoke_frame
-from .modeling import candidate_models, classification_metrics
+from .modeling import candidate_models, classification_metrics, select_for_budget
 
 RESULT_SCHEMA_VERSION = 1
+
+
+def missing_diagnostics(frame: pd.DataFrame) -> dict[str, object]:
+    """Summarize feature-level missingness after schema normalization."""
+    missing = frame[FEATURES].isna()
+    rows = len(frame)
+    by_feature = {
+        column: {
+            "count": int(missing[column].sum()),
+            "fraction": float(missing[column].mean()),
+        }
+        for column in FEATURES
+    }
+    return {
+        "rows_with_missing": int(missing.any(axis=1).sum()),
+        "row_fraction": float(missing.any(axis=1).mean()),
+        "by_feature": by_feature,
+        "rows": rows,
+    }
+
+
+def unseen_category_diagnostics(train: pd.DataFrame, evaluation: pd.DataFrame) -> dict[str, object]:
+    """Count categorical values present outside the training vocabulary."""
+    any_unseen = pd.Series(False, index=evaluation.index)
+    by_feature: dict[str, dict[str, object]] = {}
+    for column in CATEGORICAL_FEATURES:
+        known = set(train[column].dropna().astype(str))
+        values = evaluation[column].dropna().astype(str)
+        mask = evaluation[column].notna() & ~evaluation[column].astype(str).isin(known)
+        any_unseen |= mask
+        by_feature[column] = {
+            "values": sorted(set(values) - known),
+            "count": int(mask.sum()),
+            "fraction": float(mask.mean()),
+        }
+    return {
+        "rows_with_unseen": int(any_unseen.sum()),
+        "row_fraction": float(any_unseen.mean()),
+        "by_feature": by_feature,
+    }
+
+
+def segment_diagnostics(
+    frame: pd.DataFrame,
+    scores: np.ndarray,
+    budget_fraction: float,
+    columns: tuple[str, ...] = ("Contract", "InternetService"),
+) -> dict[str, object]:
+    """Report operating quality for business-relevant customer segments."""
+    labels = select_for_budget(scores, budget_fraction).astype(int)
+    report: dict[str, object] = {}
+    for column in columns:
+        segments: dict[str, object] = {}
+        for value in sorted(frame[column].astype(str).unique()):
+            mask = frame[column].astype(str).eq(value).to_numpy()
+            truth = frame.loc[mask, TARGET].to_numpy()
+            segment_scores = np.asarray(scores)[mask]
+            segments[value] = {
+                "rows": int(mask.sum()),
+                "churn_rate": float(truth.mean()),
+                "mean_score": float(segment_scores.mean()),
+                "selected_fraction": float(labels[mask].mean()),
+                "recall": float(recall_score(truth, labels[mask], zero_division=0)),
+                "error_rate": float((truth != labels[mask]).mean()),
+                "pr_auc": (
+                    float(average_precision_score(truth, segment_scores))
+                    if len(np.unique(truth)) == 2
+                    else None
+                ),
+            }
+        report[column] = segments
+    return report
 
 
 def run_experiment(
@@ -25,6 +101,7 @@ def run_experiment(
     frame = validate_frame(generate_smoke_frame(rows=rows, seed=seed))
     train, validation, test = split_data(frame, seed=seed)
     model_results: dict[str, dict[str, object]] = {}
+    score_cache: dict[str, tuple[np.ndarray, np.ndarray]] = {}
     for name in ("dummy", "weighted_logistic_regression"):
         model = candidate_models(seed)[name]
         model.fit(train[FEATURES], train[TARGET])
@@ -36,6 +113,7 @@ def run_experiment(
             ),
             "test": classification_metrics(test[TARGET], test_scores, budget_fraction),
         }
+        score_cache[name] = (validation_scores, test_scores)
     baseline_test = model_results["dummy"]["test"]
     logistic_test = model_results["weighted_logistic_regression"]["test"]
     return {
@@ -56,6 +134,18 @@ def run_experiment(
         "delta_vs_baseline": {
             "test_pr_auc": float(logistic_test["pr_auc"]) - float(baseline_test["pr_auc"]),
             "test_recall": float(logistic_test["recall"]) - float(baseline_test["recall"]),
+        },
+        "diagnostics": {
+            "missing": missing_diagnostics(frame),
+            "unseen_categories": {
+                "validation": unseen_category_diagnostics(train, validation),
+                "test": unseen_category_diagnostics(train, test),
+            },
+            "segments": segment_diagnostics(
+                test,
+                score_cache["weighted_logistic_regression"][1],
+                budget_fraction,
+            ),
         },
     }
 
