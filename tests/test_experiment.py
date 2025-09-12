@@ -42,7 +42,13 @@ def test_experiment_cli_writes_stable_json(tmp_path: Path) -> None:
     )
 
     payload = json.loads(output.read_text(encoding="utf-8"))
-    assert payload["config"] == {"budget_fraction": 0.1, "rows": 100, "seed": 19}
+    assert payload["config"] == {
+        "budget_fraction": 0.1,
+        "rows": 100,
+        "scenario": "retention_budget",
+        "seed": 19,
+        "train_fraction": 1.0,
+    }
     assert output.read_text(encoding="utf-8").endswith("\n")
 
 
@@ -93,3 +99,47 @@ def test_segment_diagnostics_preserves_segment_population() -> None:
         0 <= segment["selected_fraction"] <= 1
         for segment in diagnostics["InternetService"].values()
     )
+
+
+def test_permutation_diagnostics_cover_features_in_ranked_order() -> None:
+    diagnostics = run_experiment(seed=41, rows=120)["diagnostics"]["permutation_importance"]
+
+    assert len(diagnostics["features"]) == 19
+    means = [row["importance_mean"] for row in diagnostics["features"]]
+    assert means == sorted(means, reverse=True)
+    assert diagnostics["repeats"] == 3
+
+
+def test_retention_budget_scenario_reports_exact_selected_population() -> None:
+    result = run_experiment(seed=43, rows=200, budget_fraction=0.075)
+
+    assert result["scenario_result"]["selected_customers"] == 3
+    assert result["scenario_result"]["retention_budget_fraction"] == 0.075
+    assert result["models"]["weighted_logistic_regression"]["test"]["selected_fraction"] == 0.075
+
+
+def test_learning_curve_scenario_uses_stratified_train_fraction() -> None:
+    result = run_experiment(
+        seed=47,
+        rows=200,
+        scenario="learning_curve",
+        train_fraction=0.5,
+    )
+
+    assert result["data"]["available_train_rows"] == 120
+    assert result["data"]["train_rows"] == 60
+    assert result["scenario_result"]["used_train_rows"] == 60
+    assert 0 <= result["scenario_result"]["test_pr_auc"] <= 1
+
+
+def test_seed_stability_scenario_records_seed_and_ranking_metrics() -> None:
+    result = run_experiment(seed=53, rows=160, scenario="seed_stability")
+
+    assert result["config"]["seed"] == 53
+    assert result["scenario_result"]["seed"] == 53
+    assert set(result["scenario_result"]) == {
+        "seed",
+        "test_pr_auc",
+        "test_roc_auc",
+        "test_recall",
+    }
