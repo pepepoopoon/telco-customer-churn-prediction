@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from pathlib import Path
 
 import numpy as np
@@ -17,7 +18,7 @@ from .generate_smoke_data import generate_smoke_frame
 from .modeling import candidate_models, classification_metrics, select_for_budget
 
 RESULT_SCHEMA_VERSION = 1
-SCENARIOS = ("retention_budget", "learning_curve", "seed_stability")
+SCENARIOS = ("retention_budget", "learning_curve", "seed_stability", "data_quality")
 
 
 def missing_diagnostics(frame: pd.DataFrame) -> dict[str, object]:
@@ -145,15 +146,45 @@ def subsample_train(frame: pd.DataFrame, fraction: float, seed: int) -> pd.DataF
     return subset.reset_index(drop=True)
 
 
+def inject_data_quality(
+    frame: pd.DataFrame,
+    *,
+    missing_fraction: float,
+    unseen_fraction: float,
+    seed: int,
+) -> pd.DataFrame:
+    """Inject deterministic scoring-time missing and unseen values."""
+    for name, fraction in {
+        "missing_fraction": missing_fraction,
+        "unseen_fraction": unseen_fraction,
+    }.items():
+        if not 0 <= fraction <= 0.5:
+            raise ValueError(f"{name} must be in [0, 0.5]")
+    result = frame.copy()
+    rng = np.random.default_rng(seed)
+    if missing_fraction:
+        count = min(len(result), max(1, math.ceil(len(result) * missing_fraction)))
+        positions = rng.choice(len(result), size=count, replace=False)
+        result.loc[result.index[positions], "MonthlyCharges"] = np.nan
+    if unseen_fraction:
+        count = min(len(result), max(1, math.ceil(len(result) * unseen_fraction)))
+        positions = rng.choice(len(result), size=count, replace=False)
+        result.loc[result.index[positions], "Contract"] = "Unseen contract"
+    return result
+
+
 def scenario_result(
     *,
     scenario: str,
     seed: int,
     train: pd.DataFrame,
     available_train: pd.DataFrame,
+    test: pd.DataFrame,
     logistic_test: dict[str, object],
     budget_fraction: float,
     train_fraction: float,
+    missing_fraction: float,
+    unseen_fraction: float,
 ) -> dict[str, object]:
     """Build the scenario-specific summary from shared model evidence."""
     if scenario == "learning_curve":
@@ -169,6 +200,15 @@ def scenario_result(
             "test_pr_auc": float(logistic_test["pr_auc"]),
             "test_roc_auc": float(logistic_test["roc_auc"]),
             "test_recall": float(logistic_test["recall"]),
+        }
+    if scenario == "data_quality":
+        return {
+            "test_rows": len(test),
+            "injected_missing_rows": math.ceil(len(test) * missing_fraction),
+            "injected_unseen_rows": math.ceil(len(test) * unseen_fraction),
+            "missing_fraction": missing_fraction,
+            "unseen_fraction": unseen_fraction,
+            "test_pr_auc": float(logistic_test["pr_auc"]),
         }
     return {
         "selected_customers": int(
@@ -186,6 +226,8 @@ def run_experiment(
     budget_fraction: float = 0.20,
     scenario: str = "retention_budget",
     train_fraction: float = 1.0,
+    missing_fraction: float = 0.0,
+    unseen_fraction: float = 0.0,
 ) -> dict[str, object]:
     """Train and evaluate one reproducible synthetic experiment."""
     if rows < 80:
@@ -196,9 +238,29 @@ def run_experiment(
         raise ValueError(f"unsupported scenario: {scenario}")
     if not 0 < train_fraction <= 1:
         raise ValueError("train_fraction must be in (0, 1]")
+    for name, fraction in {
+        "missing_fraction": missing_fraction,
+        "unseen_fraction": unseen_fraction,
+    }.items():
+        if not 0 <= fraction <= 0.5:
+            raise ValueError(f"{name} must be in [0, 0.5]")
     frame = validate_frame(generate_smoke_frame(rows=rows, seed=seed))
     available_train, validation, test = split_data(frame, seed=seed)
     train = subsample_train(available_train, train_fraction, seed)
+    if scenario == "data_quality":
+        validation = inject_data_quality(
+            validation,
+            missing_fraction=missing_fraction,
+            unseen_fraction=unseen_fraction,
+            seed=seed + 1,
+        )
+        test = inject_data_quality(
+            test,
+            missing_fraction=missing_fraction,
+            unseen_fraction=unseen_fraction,
+            seed=seed + 2,
+        )
+    observed_frame = pd.concat([train, validation, test], ignore_index=True)
     model_results: dict[str, dict[str, object]] = {}
     score_cache: dict[str, tuple[np.ndarray, np.ndarray]] = {}
     fitted_models: dict[str, object] = {}
@@ -225,6 +287,8 @@ def run_experiment(
             "budget_fraction": budget_fraction,
             "scenario": scenario,
             "train_fraction": train_fraction,
+            "missing_fraction": missing_fraction,
+            "unseen_fraction": unseen_fraction,
         },
         "data": {
             "train_rows": len(train),
@@ -244,12 +308,15 @@ def run_experiment(
             seed=seed,
             train=train,
             available_train=available_train,
+            test=test,
             logistic_test=logistic_test,
             budget_fraction=budget_fraction,
             train_fraction=train_fraction,
+            missing_fraction=missing_fraction,
+            unseen_fraction=unseen_fraction,
         ),
         "diagnostics": {
-            "missing": missing_diagnostics(frame),
+            "missing": missing_diagnostics(observed_frame),
             "unseen_categories": {
                 "validation": unseen_category_diagnostics(train, validation),
                 "test": unseen_category_diagnostics(train, test),
@@ -285,6 +352,8 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--budget-fraction", type=float, default=0.20)
     parser.add_argument("--scenario", choices=SCENARIOS, default="retention_budget")
     parser.add_argument("--train-fraction", type=float, default=1.0)
+    parser.add_argument("--missing-fraction", type=float, default=0.0)
+    parser.add_argument("--unseen-fraction", type=float, default=0.0)
     args = parser.parse_args(argv)
     result = run_experiment(
         seed=args.seed,
@@ -292,6 +361,8 @@ def main(argv: list[str] | None = None) -> None:
         budget_fraction=args.budget_fraction,
         scenario=args.scenario,
         train_fraction=args.train_fraction,
+        missing_fraction=args.missing_fraction,
+        unseen_fraction=args.unseen_fraction,
     )
     write_result(result, args.output)
     print(f"experiment result written to {args.output}")

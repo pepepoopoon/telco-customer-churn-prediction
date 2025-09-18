@@ -44,10 +44,12 @@ def test_experiment_cli_writes_stable_json(tmp_path: Path) -> None:
     payload = json.loads(output.read_text(encoding="utf-8"))
     assert payload["config"] == {
         "budget_fraction": 0.1,
+        "missing_fraction": 0.0,
         "rows": 100,
         "scenario": "retention_budget",
         "seed": 19,
         "train_fraction": 1.0,
+        "unseen_fraction": 0.0,
     }
     assert output.read_text(encoding="utf-8").endswith("\n")
 
@@ -143,3 +145,20 @@ def test_seed_stability_scenario_records_seed_and_ranking_metrics() -> None:
         "test_roc_auc",
         "test_recall",
     }
+
+
+def test_data_quality_scenario_injects_missing_and_unseen_values() -> None:
+    result = run_experiment(
+        seed=59,
+        rows=200,
+        scenario="data_quality",
+        missing_fraction=0.1,
+        unseen_fraction=0.15,
+    )
+
+    assert result["scenario_result"]["injected_missing_rows"] == 4
+    assert result["scenario_result"]["injected_unseen_rows"] == 6
+    assert result["diagnostics"]["missing"]["by_feature"]["MonthlyCharges"]["count"] == 8
+    assert (
+        result["diagnostics"]["unseen_categories"]["test"]["by_feature"]["Contract"]["count"] == 6
+    )
