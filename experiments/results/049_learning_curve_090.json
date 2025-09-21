@@ -1,0 +1,532 @@
+{
+  "config": {
+    "budget_fraction": 0.2,
+    "missing_fraction": 0.0,
+    "rows": 480,
+    "scenario": "learning_curve",
+    "seed": 20250809,
+    "train_fraction": 0.9,
+    "unseen_fraction": 0.0
+  },
+  "data": {
+    "available_train_rows": 288,
+    "churn_rate": 0.20208333333333334,
+    "test_rows": 96,
+    "train_rows": 259,
+    "validation_rows": 96
+  },
+  "delta_vs_baseline": {
+    "test_pr_auc": 0.16737017649675093,
+    "test_recall": 0.15789473684210525
+  },
+  "diagnostics": {
+    "missing": {
+      "by_feature": {
+        "Contract": {
+          "count": 0,
+          "fraction": 0.0
+        },
+        "Dependents": {
+          "count": 0,
+          "fraction": 0.0
+        },
+        "DeviceProtection": {
+          "count": 0,
+          "fraction": 0.0
+        },
+        "InternetService": {
+          "count": 0,
+          "fraction": 0.0
+        },
+        "MonthlyCharges": {
+          "count": 0,
+          "fraction": 0.0
+        },
+        "MultipleLines": {
+          "count": 0,
+          "fraction": 0.0
+        },
+        "OnlineBackup": {
+          "count": 0,
+          "fraction": 0.0
+        },
+        "OnlineSecurity": {
+          "count": 0,
+          "fraction": 0.0
+        },
+        "PaperlessBilling": {
+          "count": 0,
+          "fraction": 0.0
+        },
+        "Partner": {
+          "count": 0,
+          "fraction": 0.0
+        },
+        "PaymentMethod": {
+          "count": 0,
+          "fraction": 0.0
+        },
+        "PhoneService": {
+          "count": 0,
+          "fraction": 0.0
+        },
+        "SeniorCitizen": {
+          "count": 0,
+          "fraction": 0.0
+        },
+        "StreamingMovies": {
+          "count": 0,
+          "fraction": 0.0
+        },
+        "StreamingTV": {
+          "count": 0,
+          "fraction": 0.0
+        },
+        "TechSupport": {
+          "count": 0,
+          "fraction": 0.0
+        },
+        "TotalCharges": {
+          "count": 3,
+          "fraction": 0.0066518847006651885
+        },
+        "gender": {
+          "count": 0,
+          "fraction": 0.0
+        },
+        "tenure": {
+          "count": 0,
+          "fraction": 0.0
+        }
+      },
+      "row_fraction": 0.0066518847006651885,
+      "rows": 451,
+      "rows_with_missing": 3
+    },
+    "permutation_importance": {
+      "features": [
+        {
+          "feature": "TechSupport",
+          "importance_mean": 0.04375339996288848,
+          "importance_std": 0.049435366007267605
+        },
+        {
+          "feature": "Contract",
+          "importance_mean": 0.0212238756626964,
+          "importance_std": 0.03361855333075499
+        },
+        {
+          "feature": "TotalCharges",
+          "importance_mean": 0.011440825043294597,
+          "importance_std": 0.025107633179074967
+        },
+        {
+          "feature": "StreamingTV",
+          "importance_mean": 0.0034837131164422255,
+          "importance_std": 0.0031479503285829786
+        },
+        {
+          "feature": "Partner",
+          "importance_mean": 0.0016066249620822666,
+          "importance_std": 0.006795768774148196
+        },
+        {
+          "feature": "PaperlessBilling",
+          "importance_mean": 0.00022290488800132588,
+          "importance_std": 0.002949793849252086
+        },
+        {
+          "feature": "OnlineBackup",
+          "importance_mean": 7.884207541845416e-05,
+          "importance_std": 0.011457088779761771
+        },
+        {
+          "feature": "Dependents",
+          "importance_mean": -0.0005229702827511488,
+          "importance_std": 0.011650968131835296
+        },
+        {
+          "feature": "MonthlyCharges",
+          "importance_mean": -0.001151316683177676,
+          "importance_std": 0.0039764404521484215
+        },
+        {
+          "feature": "PhoneService",
+          "importance_mean": -0.003348554541228103,
+          "importance_std": 0.006180905199019045
+        },
+        {
+          "feature": "StreamingMovies",
+          "importance_mean": -0.006094987221631543,
+          "importance_std": 0.018625690537019037
+        },
+        {
+          "feature": "OnlineSecurity",
+          "importance_mean": -0.01156855291722525,
+          "importance_std": 0.005327612936010942
+        },
+        {
+          "feature": "gender",
+          "importance_mean": -0.013133963665261558,
+          "importance_std": 0.008327006234470464
+        },
+        {
+          "feature": "DeviceProtection",
+          "importance_mean": -0.01315814613258176,
+          "importance_std": 0.01076892096342121
+        },
+        {
+          "feature": "InternetService",
+          "importance_mean": -0.013442667073733075,
+          "importance_std": 0.02511321353851745
+        },
+        {
+          "feature": "SeniorCitizen",
+          "importance_mean": -0.02616529013066754,
+          "importance_std": 0.005845284769995539
+        },
+        {
+          "feature": "tenure",
+          "importance_mean": -0.02757090091709456,
+          "importance_std": 0.051861542195835365
+        },
+        {
+          "feature": "MultipleLines",
+          "importance_mean": -0.042725515475370755,
+          "importance_std": 0.046513411511680126
+        },
+        {
+          "feature": "PaymentMethod",
+          "importance_mean": -0.0615165474889929,
+          "importance_std": 0.00981757348317556
+        }
+      ],
+      "repeats": 3,
+      "scoring": "average_precision"
+    },
+    "segments": {
+      "Contract": {
+        "Month-to-month": {
+          "churn_rate": 0.2909090909090909,
+          "error_rate": 0.32727272727272727,
+          "mean_score": 0.4612961247117396,
+          "pr_auc": 0.46012889297039467,
+          "recall": 0.4375,
+          "rows": 55,
+          "selected_fraction": 0.2909090909090909
+        },
+        "One year": {
+          "churn_rate": 0.08333333333333333,
+          "error_rate": 0.20833333333333334,
+          "mean_score": 0.29247400595820355,
+          "pr_auc": 0.09090909090909091,
+          "recall": 0.0,
+          "rows": 24,
+          "selected_fraction": 0.125
+        },
+        "Two year": {
+          "churn_rate": 0.058823529411764705,
+          "error_rate": 0.11764705882352941,
+          "mean_score": 0.25331441967294993,
+          "pr_auc": 0.1111111111111111,
+          "recall": 0.0,
+          "rows": 17,
+          "selected_fraction": 0.058823529411764705
+        }
+      },
+      "InternetService": {
+        "DSL": {
+          "churn_rate": 0.2222222222222222,
+          "error_rate": 0.25,
+          "mean_score": 0.2885810963004864,
+          "pr_auc": 0.35199778775146423,
+          "recall": 0.125,
+          "rows": 36,
+          "selected_fraction": 0.08333333333333333
+        },
+        "Fiber optic": {
+          "churn_rate": 0.23809523809523808,
+          "error_rate": 0.3333333333333333,
+          "mean_score": 0.5401433872035272,
+          "pr_auc": 0.46036538461538457,
+          "recall": 0.6,
+          "rows": 42,
+          "selected_fraction": 0.38095238095238093
+        },
+        "No": {
+          "churn_rate": 0.05555555555555555,
+          "error_rate": 0.1111111111111111,
+          "mean_score": 0.20122591151205885,
+          "pr_auc": 0.3333333333333333,
+          "recall": 0.0,
+          "rows": 18,
+          "selected_fraction": 0.05555555555555555
+        }
+      }
+    },
+    "unseen_categories": {
+      "test": {
+        "by_feature": {
+          "Contract": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "Dependents": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "DeviceProtection": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "InternetService": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "MultipleLines": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "OnlineBackup": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "OnlineSecurity": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "PaperlessBilling": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "Partner": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "PaymentMethod": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "PhoneService": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "SeniorCitizen": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "StreamingMovies": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "StreamingTV": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "TechSupport": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "gender": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          }
+        },
+        "row_fraction": 0.0,
+        "rows_with_unseen": 0
+      },
+      "validation": {
+        "by_feature": {
+          "Contract": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "Dependents": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "DeviceProtection": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "InternetService": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "MultipleLines": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "OnlineBackup": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "OnlineSecurity": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "PaperlessBilling": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "Partner": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "PaymentMethod": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "PhoneService": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "SeniorCitizen": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "StreamingMovies": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "StreamingTV": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "TechSupport": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          },
+          "gender": {
+            "count": 0,
+            "fraction": 0.0,
+            "values": []
+          }
+        },
+        "row_fraction": 0.0,
+        "rows_with_unseen": 0
+      }
+    }
+  },
+  "models": {
+    "dummy": {
+      "test": {
+        "confusion_matrix": [
+          [
+            61,
+            16
+          ],
+          [
+            15,
+            4
+          ]
+        ],
+        "f1": 0.20512820512820512,
+        "pr_auc": 0.19791666666666666,
+        "precision": 0.2,
+        "recall": 0.21052631578947367,
+        "roc_auc": 0.5,
+        "selected_fraction": 0.20833333333333334,
+        "threshold": 0.20463320463320464
+      },
+      "validation": {
+        "confusion_matrix": [
+          [
+            61,
+            16
+          ],
+          [
+            15,
+            4
+          ]
+        ],
+        "f1": 0.20512820512820512,
+        "pr_auc": 0.19791666666666666,
+        "precision": 0.2,
+        "recall": 0.21052631578947367,
+        "roc_auc": 0.5,
+        "selected_fraction": 0.20833333333333334,
+        "threshold": 0.20463320463320464
+      }
+    },
+    "weighted_logistic_regression": {
+      "test": {
+        "confusion_matrix": [
+          [
+            64,
+            13
+          ],
+          [
+            12,
+            7
+          ]
+        ],
+        "f1": 0.358974358974359,
+        "pr_auc": 0.3652868431634176,
+        "precision": 0.35,
+        "recall": 0.3684210526315789,
+        "roc_auc": 0.7026657552973342,
+        "selected_fraction": 0.20833333333333334,
+        "threshold": 0.6455003360268059
+      },
+      "validation": {
+        "confusion_matrix": [
+          [
+            61,
+            16
+          ],
+          [
+            15,
+            4
+          ]
+        ],
+        "f1": 0.20512820512820512,
+        "pr_auc": 0.26774731830343335,
+        "precision": 0.2,
+        "recall": 0.21052631578947367,
+        "roc_auc": 0.6281613123718387,
+        "selected_fraction": 0.20833333333333334,
+        "threshold": 0.6666511187570883
+      }
+    }
+  },
+  "scenario_result": {
+    "available_train_rows": 288,
+    "test_pr_auc": 0.3652868431634176,
+    "train_fraction": 0.9,
+    "used_train_rows": 259
+  },
+  "schema_version": 1,
+  "selected_model": "weighted_logistic_regression"
+}
